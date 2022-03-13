@@ -10,6 +10,9 @@ namespace BrusselMusicBot
 {
     class Program
     {
+        // <Current Date>.<New Versions On That Date>
+        private const string version = "3-13-2022.0";
+
         static void Main(string[] args)
         {
             MainAsync().GetAwaiter().GetResult();
@@ -44,9 +47,11 @@ namespace BrusselMusicBot
             };
             var lavalink = discord.UseLavalink();
 
-
+            Console.WriteLine($"Running BrusselBot Version ${version}");
             await discord.ConnectAsync();
+            Console.WriteLine($"Logged In");
             await lavalink.ConnectAsync(lavalinkConfig);
+            Console.WriteLine($"Lavalink Established");
             await Task.Delay(-1);
         }
     }

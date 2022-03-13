@@ -20,6 +20,7 @@ namespace BrusselMusicBot.Commands
         [Command("play")]
         public async Task Play(CommandContext ctx, [RemainingText] string search)
         {
+            Console.WriteLine($"[Music]: Play Command by {ctx.Member.DisplayName} with search {search}");
             if (ctx.Member.VoiceState == null || ctx.Member.VoiceState.Channel == null)
             {
                 await ctx.RespondAsync("You are not in a voice channel.");
@@ -93,6 +94,7 @@ namespace BrusselMusicBot.Commands
         [Command("pause")]
         public async Task Pause(CommandContext ctx)
         {
+            Console.WriteLine($"[Music]: Pause Command by {ctx.Member.DisplayName} set isPaused to {!isPaused}");
             if (ctx.Member.VoiceState == null || ctx.Member.VoiceState.Channel == null)
             {
                 await ctx.RespondAsync("You are not in a voice channel.");
@@ -129,6 +131,7 @@ namespace BrusselMusicBot.Commands
         [Command("loop")]
         public async Task Loop(CommandContext ctx)
         {
+            Console.WriteLine($"[Music]: Loop Command by {ctx.Member.DisplayName} set isLooping to {!isLooping}");
             isLooping = !isLooping;
             await ctx.RespondAsync($"Looping: {isLooping}");
         }
@@ -136,6 +139,7 @@ namespace BrusselMusicBot.Commands
         [Command("join")]
         public async Task Join(CommandContext ctx)
         {
+            Console.WriteLine($"[Music]: Join Command by {ctx.Member.DisplayName} into channel {ctx.Member.VoiceState.Channel}");
             var lava = ctx.Client.GetLavalink();
             var channel = ctx.Member.VoiceState.Channel;
             if (!lava.ConnectedNodes.Any())
@@ -159,6 +163,7 @@ namespace BrusselMusicBot.Commands
         [Command("leave")]
         public async Task Leave(CommandContext ctx)
         {
+            Console.WriteLine($"[Music]: Leave Command by {ctx.Member.DisplayName} from channel {ctx.Member.VoiceState.Channel}");
             var lava = ctx.Client.GetLavalink();
             var channel = ctx.Member.VoiceState.Channel;
             if (!lava.ConnectedNodes.Any())
