@@ -47,7 +47,7 @@ namespace BrusselMusicBot
             };
             var lavalink = discord.UseLavalink();
 
-            Console.WriteLine($"Running BrusselBot Version ${version}");
+            Console.WriteLine($"Running BrusselBot Version {version}");
             await discord.ConnectAsync();
             Console.WriteLine($"Logged In");
             await lavalink.ConnectAsync(lavalinkConfig);
