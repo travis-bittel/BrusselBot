@@ -1,2 +1,3 @@
-java -jar Lavalink/Lavalink.jar
+cd Lavalink
+java -jar Lavalink.jar
 pause
