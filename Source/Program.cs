@@ -11,9 +11,9 @@ namespace BrusselMusicBot
     class Program
     {
         // <Current Date>.<New Versions On That Date>
-        private const string version = "3-13-2022.0";
+        private const string version = "3-14-2022.0";
 
-        static void Main(string[] args)
+        static void Main()
         {
             MainAsync().GetAwaiter().GetResult();
         }

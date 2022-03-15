@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BrusselMusicBot.Source;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Lavalink.EventArgs;
 
@@ -13,10 +15,6 @@ namespace BrusselMusicBot.Commands
 {
     class MusicCommands : BaseCommandModule
     {
-        private static bool isPaused = false;
-        private static bool isLooping = false;
-        private static LavalinkTrack currentTrack = null;
-
         [Command("play")]
         public async Task Play(CommandContext ctx, [RemainingText] string search)
         {
@@ -27,9 +25,7 @@ namespace BrusselMusicBot.Commands
                 return;
             }
 
-            var lava = ctx.Client.GetLavalink();
-            var node = lava.ConnectedNodes.Values.First();
-            var conn = node.GetGuildConnection(ctx.Member.VoiceState.Guild);
+            var conn = GetConn(ctx);
 
             // Join the user's channel if we aren't already in it
             if (conn == null || ctx.Member.VoiceState.Channel != conn.Channel)
@@ -37,9 +33,7 @@ namespace BrusselMusicBot.Commands
                 await Join(ctx);
 
                 // Get the new conn after we join
-                lava = ctx.Client.GetLavalink();
-                node = lava.ConnectedNodes.Values.First();
-                conn = node.GetGuildConnection(ctx.Member.VoiceState.Guild);
+                conn = GetConn(ctx);
             }
 
             if (conn == null)
@@ -48,7 +42,7 @@ namespace BrusselMusicBot.Commands
                 return;
             }
 
-            var loadResult = await node.Rest.GetTracksAsync(search);
+            var loadResult = await conn.Node.Rest.GetTracksAsync(search);
 
             if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed
                 || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
@@ -56,42 +50,13 @@ namespace BrusselMusicBot.Commands
                 await ctx.RespondAsync($"Track search failed for {search}.");
                 return;
             }
+            LavalinkTrack track = GetTrackAsync(ctx, search).Result;
+            await Music.EnqueueTrack(conn, track);
 
-            currentTrack = loadResult.Tracks.First();
-
-            await PlayTrack(conn);
-            conn.PlaybackFinished += HandleLooping;
-
-            await ctx.RespondAsync($"Now playing {currentTrack.Title}!");
+            await ctx.RespondAsync($"Now playing: *{track.Title}*");
         }
 
-        /// <summary>
-        /// Plays the passed in track on the passed in conn.
-        /// </summary>
-        /// <param name="conn"></param>
-        /// <param name="track"></param>
-        /// <returns></returns>
-        public async Task PlayTrack(LavalinkGuildConnection conn)
-        {
-            await conn.PlayAsync(currentTrack);
-        }
-
-        /// <summary>
-        /// If isLooping is true, calls PlayTrack with the current track on the current conn.
-        /// The Play command subscribes this to conn.PlaybackFinished.
-        /// </summary>
-        /// <param name="conn"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        public async Task HandleLooping(LavalinkGuildConnection conn, TrackFinishEventArgs args)
-        {
-            if (isLooping)
-            {
-                await PlayTrack(conn);
-            }
-        }
-
-        [Command("pause")]
+        /*[Command("pause")]
         public async Task Pause(CommandContext ctx)
         {
             Console.WriteLine($"[Music]: Pause Command by {ctx.Member.DisplayName} set isPaused to {!isPaused}");
@@ -126,14 +91,22 @@ namespace BrusselMusicBot.Commands
             {
                 await conn.PauseAsync();
             }
+        }*/
+
+        [Command("pause")]
+        public async Task Pause(CommandContext ctx)
+        {
+            Console.WriteLine($"[Music]: Pause Command by {ctx.Member.DisplayName}");
+            await Music.TogglePauseAsync(GetConn(ctx));
+            await ctx.RespondAsync($"Paused: {Music.GetMusicInstance(GetConn(ctx)).IsPaused}");
         }
 
         [Command("loop")]
         public async Task Loop(CommandContext ctx)
         {
-            Console.WriteLine($"[Music]: Loop Command by {ctx.Member.DisplayName} set isLooping to {!isLooping}");
-            isLooping = !isLooping;
-            await ctx.RespondAsync($"Looping: {isLooping}");
+            Console.WriteLine($"[Music]: Loop Command by {ctx.Member.DisplayName}");
+            Music.ToggleLooping(GetConn(ctx));
+            await ctx.RespondAsync($"Looping: {Music.GetMusicInstance(GetConn(ctx)).IsLooping}");
         }
 
         [Command("join")]
@@ -190,6 +163,97 @@ namespace BrusselMusicBot.Commands
 
             await conn.DisconnectAsync();
             await ctx.RespondAsync($"Left {channel.Name}!");
+        }
+
+        [Command("queue")]
+        public async Task Queue(CommandContext ctx)
+        {
+            string str = "";
+            int i = 1;
+            LavalinkTrack[] tracks = Music.GetMusicInstance(GetConn(ctx)).trackList.ToArray();
+            foreach (LavalinkTrack track in tracks)
+            {
+                str += $"{i}. {track.Title}\n";
+            }
+
+            var embed = new DiscordEmbedBuilder
+            {
+                Color = new DiscordColor("#FF0000"),
+                Title = "Current Queue",
+                Description = str,
+                Timestamp = DateTime.UtcNow
+            };
+
+            await ctx.RespondAsync(embed);
+        }
+
+        [Command("skip")]
+        public async Task Skip(CommandContext ctx)
+        {
+            await GetConn(ctx).SeekAsync(GetConn(ctx).CurrentState.CurrentTrack.Length);
+        }
+
+        [Command("playskip")]
+        public async Task PlaySkip(CommandContext ctx, [RemainingText] string search)
+        {
+            LavalinkTrack track = GetTrackAsync(ctx, search).Result;
+            Music.GetMusicInstance(GetConn(ctx)).trackList.Insert(0, track);
+            await Skip(ctx);
+        }
+
+        [Command("seek")]
+        public async Task Seek(CommandContext ctx, string position)
+        {
+            int pos = int.Parse(position);
+            await GetConn(ctx).SeekAsync(TimeSpan.FromSeconds(pos));
+        }
+
+        [Command("np")]
+        public async Task NowPlaying(CommandContext ctx)
+        {
+            MusicInstance instance = Music.GetMusicInstance(GetConn(ctx));
+
+            if (instance != null)
+            {
+                var embed = new DiscordEmbedBuilder
+                {
+                    Color = new DiscordColor("#FF0000"),
+                    Title = "Now Playing",
+                    //Description = $"**{instance.LastTrack.Title}** \n{GetConn(ctx).CurrentState.PlaybackPosition.Minutes}:{GetConn(ctx).CurrentState.PlaybackPosition.Seconds} / {instance.LastTrack.Length.Minutes}:{instance.LastTrack.Length.Seconds}",
+                    Description = $"**{GetConn(ctx).CurrentState.CurrentTrack.Title}**" +
+                        $"\n{GetConn(ctx).CurrentState.PlaybackPosition} " +
+                        $"/ {GetConn(ctx).CurrentState.CurrentTrack.Length}",
+                    Timestamp = DateTime.UtcNow
+                };
+
+                await ctx.RespondAsync(embed);
+            }
+        }
+
+        private LavalinkGuildConnection GetConn(CommandContext ctx)
+        {
+            var lava = ctx.Client.GetLavalink();
+            var node = lava.ConnectedNodes.Values.First();
+            return node.GetGuildConnection(ctx.Member.VoiceState.Guild);
+        }
+
+        private async Task<LavalinkTrack> GetTrackAsync(CommandContext ctx, string search)
+        {
+            if (GetConn(ctx) == null)
+            {
+                await ctx.RespondAsync("Lavalink is not connected.");
+                return null;
+            }
+
+            var loadResult = await GetConn(ctx).Node.Rest.GetTracksAsync(search);
+
+            if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed
+                || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
+            {
+                await ctx.RespondAsync($"Track search failed for {search}.");
+                return null;
+            }
+            return loadResult.Tracks.First();
         }
     }
 }
