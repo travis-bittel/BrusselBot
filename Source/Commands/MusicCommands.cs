@@ -47,13 +47,20 @@ namespace BrusselMusicBot.Commands
             if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed
                 || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
             {
-                await ctx.RespondAsync($"Track search failed for {search}.");
+                await ctx.RespondAsync($"Track search failed for **{search}**!");
                 return;
             }
             LavalinkTrack track = GetTrackAsync(ctx, search).Result;
-            await Music.EnqueueTrack(conn, track);
 
-            await ctx.RespondAsync($"Now playing: *{track.Title}*");
+            if (GetConn(ctx).CurrentState.CurrentTrack == null)
+            {
+                await ctx.RespondAsync($"Now playing **{track.Title}**");
+            } else
+            {
+                await ctx.RespondAsync($"Queued **{track.Title}**");
+            }
+
+            await Music.EnqueueTrack(conn, track);
         }
 
         [Command("pause")]
@@ -61,7 +68,13 @@ namespace BrusselMusicBot.Commands
         {
             Console.WriteLine($"[Music]: Pause Command by {ctx.Member.DisplayName}");
             await Music.TogglePauseAsync(GetConn(ctx));
-            await ctx.RespondAsync($"Paused: {Music.GetMusicInstance(GetConn(ctx)).IsPaused}");
+            if (Music.GetMusicInstance(GetConn(ctx)).IsPaused)
+            {
+                await ctx.RespondAsync($"Paused!");
+            } else
+            {
+                await ctx.RespondAsync($"Resuming!");
+            }
         }
 
         [Command("loop")]
@@ -69,7 +82,13 @@ namespace BrusselMusicBot.Commands
         {
             Console.WriteLine($"[Music]: Loop Command by {ctx.Member.DisplayName}");
             Music.ToggleLooping(GetConn(ctx));
-            await ctx.RespondAsync($"Looping: {Music.GetMusicInstance(GetConn(ctx)).IsLooping}");
+            if (Music.GetMusicInstance(GetConn(ctx)).IsLooping)
+            {
+                await ctx.RespondAsync($"Now Looping: **{GetConn(ctx).CurrentState.CurrentTrack.Title}**");
+            } else
+            {
+                await ctx.RespondAsync($"Stopped Looping");
+            }
         }
 
         [Command("join")]
@@ -80,7 +99,7 @@ namespace BrusselMusicBot.Commands
             var channel = ctx.Member.VoiceState.Channel;
             if (!lava.ConnectedNodes.Any())
             {
-                await ctx.RespondAsync("The Lavalink connection is not established");
+                await ctx.RespondAsync("The Lavalink connection is not established!");
                 return;
             }
 
@@ -88,12 +107,12 @@ namespace BrusselMusicBot.Commands
 
             if (channel.Type != ChannelType.Voice)
             {
-                await ctx.RespondAsync("Not a valid voice channel.");
+                await ctx.RespondAsync("Not a valid voice channel!");
                 return;
             }
 
             await node.ConnectAsync(channel);
-            await ctx.RespondAsync($"Joined {channel.Name}!");
+            await ctx.RespondAsync($"Joined **{channel.Name}**!");
         }
 
         [Command("leave")]
@@ -104,7 +123,7 @@ namespace BrusselMusicBot.Commands
             var channel = ctx.Member.VoiceState.Channel;
             if (!lava.ConnectedNodes.Any())
             {
-                await ctx.RespondAsync("The Lavalink connection is not established");
+                await ctx.RespondAsync("The Lavalink connection is not established!");
                 return;
             }
 
@@ -120,12 +139,12 @@ namespace BrusselMusicBot.Commands
 
             if (conn == null)
             {
-                await ctx.RespondAsync("Lavalink is not connected.");
+                await ctx.RespondAsync("Lavalink is not connected!");
                 return;
             }
 
             await conn.DisconnectAsync();
-            await ctx.RespondAsync($"Left {channel.Name}!");
+            await ctx.RespondAsync($"Disconnecting From **{channel.Name}**!");
         }
 
         [Command("queue")]
@@ -134,6 +153,7 @@ namespace BrusselMusicBot.Commands
             string str = "";
             int i = 1;
             LavalinkTrack[] tracks = Music.GetMusicInstance(GetConn(ctx)).trackList.ToArray();
+            str += $"**Now Playing: {GetConn(ctx).CurrentState.CurrentTrack.Title}**\n\n";
             foreach (LavalinkTrack track in tracks)
             {
                 str += $"{i}. {track.Title}\n";
@@ -154,6 +174,7 @@ namespace BrusselMusicBot.Commands
         [Command("skip")]
         public async Task Skip(CommandContext ctx)
         {
+            await ctx.RespondAsync($"Skipping **{GetConn(ctx).CurrentState.CurrentTrack.Title}**");
             await GetConn(ctx).SeekAsync(GetConn(ctx).CurrentState.CurrentTrack.Length);
         }
 
@@ -161,6 +182,7 @@ namespace BrusselMusicBot.Commands
         public async Task PlaySkip(CommandContext ctx, [RemainingText] string search)
         {
             LavalinkTrack track = GetTrackAsync(ctx, search).Result;
+            await ctx.RespondAsync($"Playing **{track.Title}**");
             Music.GetMusicInstance(GetConn(ctx)).trackList.Insert(0, track);
             await Skip(ctx);
         }
@@ -170,6 +192,7 @@ namespace BrusselMusicBot.Commands
         {
             int pos = int.Parse(position);
             await GetConn(ctx).SeekAsync(TimeSpan.FromSeconds(pos));
+            await NowPlaying(ctx);
         }
 
         [Command("np")]
@@ -183,10 +206,10 @@ namespace BrusselMusicBot.Commands
                 {
                     Color = new DiscordColor("#FF0000"),
                     Title = "Now Playing",
-                    //Description = $"**{instance.LastTrack.Title}** \n{GetConn(ctx).CurrentState.PlaybackPosition.Minutes}:{GetConn(ctx).CurrentState.PlaybackPosition.Seconds} / {instance.LastTrack.Length.Minutes}:{instance.LastTrack.Length.Seconds}",
                     Description = $"**{GetConn(ctx).CurrentState.CurrentTrack.Title}**" +
-                        $"\n{GetConn(ctx).CurrentState.PlaybackPosition} " +
-                        $"/ {GetConn(ctx).CurrentState.CurrentTrack.Length}",
+                        $"\n{GetConn(ctx).CurrentState.CurrentTrack.Uri}" +
+                        $"\n{GetConn(ctx).CurrentState.PlaybackPosition:hh\\:mm\\:ss} " +
+                        $"/ {GetConn(ctx).CurrentState.CurrentTrack.Length:hh\\:mm\\:ss}",
                     Timestamp = DateTime.UtcNow
                 };
 
