@@ -35,8 +35,8 @@ namespace BrusselMusicBot.Source
             {
                 instance = new MusicInstance(conn);
                 musicInstances.TryAdd(conn, instance);
-            } 
-            instance.trackList.Insert(0, track);
+            }
+            instance.trackList.Add(track);
             if (conn.CurrentState.CurrentTrack == null)
             {
                 await instance.PlayNextTrack();

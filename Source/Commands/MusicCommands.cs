@@ -56,43 +56,6 @@ namespace BrusselMusicBot.Commands
             await ctx.RespondAsync($"Now playing: *{track.Title}*");
         }
 
-        /*[Command("pause")]
-        public async Task Pause(CommandContext ctx)
-        {
-            Console.WriteLine($"[Music]: Pause Command by {ctx.Member.DisplayName} set isPaused to {!isPaused}");
-            if (ctx.Member.VoiceState == null || ctx.Member.VoiceState.Channel == null)
-            {
-                await ctx.RespondAsync("You are not in a voice channel.");
-                return;
-            }
-
-            var lava = ctx.Client.GetLavalink();
-            var node = lava.ConnectedNodes.Values.First();
-            var conn = node.GetGuildConnection(ctx.Member.VoiceState.Guild);
-
-            if (conn == null)
-            {
-                await ctx.RespondAsync("Lavalink is not connected.");
-                return;
-            }
-
-            if (conn.CurrentState.CurrentTrack == null)
-            {
-                await ctx.RespondAsync("There are no tracks loaded.");
-                return;
-            }
-
-            isPaused = !isPaused;
-            await ctx.RespondAsync($"Paused: {isPaused}");
-            if (isPaused)
-            {
-                await conn.ResumeAsync();
-            } else
-            {
-                await conn.PauseAsync();
-            }
-        }*/
-
         [Command("pause")]
         public async Task Pause(CommandContext ctx)
         {
@@ -174,6 +137,7 @@ namespace BrusselMusicBot.Commands
             foreach (LavalinkTrack track in tracks)
             {
                 str += $"{i}. {track.Title}\n";
+                i++;
             }
 
             var embed = new DiscordEmbedBuilder
