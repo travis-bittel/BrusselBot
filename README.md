@@ -13,7 +13,7 @@ Sure! Feel free to follow the steps below and use it however you wish. You can f
   - Most importantly, include your bot token from the previous step!
   - Also ensure that your Lavalink settings in **settings.xml** match with the settings inside of **Lavalink/application.yml**.
 - Run **lavalink.bat**.
-- Run **LatestBuild/netcoreapp3.1/BrusselMusicBot.exe**.
+- Run **bot.bat** or **LatestBuild/netcoreapp3.1/BrusselMusicBot.exe** — either works!
 
 # Discord Commands
 - **join**: Causes the bot to join the user's current channel.
