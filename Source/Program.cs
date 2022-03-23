@@ -21,7 +21,6 @@ namespace BrusselMusicBot
         static async Task MainAsync()
         {
             settings = new BotSettings("settings.xml");
-            Console.WriteLine($"Running Settings:\n{settings}");
 
             var discord = new DiscordClient(new DiscordConfiguration()
             {
