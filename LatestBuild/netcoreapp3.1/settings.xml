@@ -4,7 +4,7 @@
 	<version>3-22-2022.0</version>
 	
 	<!--Place your bot token here-->
-	<token>OTUxODcxMjM2MzI0MDg5ODY2.YitxKw.oFEnq1t6Na_CuWxIYxXKFWo_4NI</token>
+	<token></token>
 	
 	<!--Your command prefix-->
 	<prefix>!</prefix>
@@ -13,6 +13,6 @@
 		<!--These must match your Lavalink settings!-->
 		<hostname>127.0.0.1</hostname>
 		<port>2333</port>
-		<password>youshallnotpass</password>
+		<password></password>
 	</lavalink>
 </settings>
