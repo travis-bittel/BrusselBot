@@ -117,7 +117,6 @@ namespace BrusselMusicBot
                 XmlDocument doc = new XmlDocument();
                 doc.Load(filepath);
                 XmlElement root = doc.DocumentElement;
-                Console.WriteLine(root.Name);
 
                 version = root.SelectSingleNode("version").InnerText;
                 token = root.SelectSingleNode("token").InnerText;
