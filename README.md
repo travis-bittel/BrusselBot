@@ -7,7 +7,7 @@ Latest Build Version: **3-22-2022.2**
 Sure! Feel free to follow the steps below and use it however you wish. You can feel free to modify the bot however you see fit.
 
 # Running the Bot
-- Download the **LatestBuild** folder and the **Lavalink** folder or just clone the project.
+- Download the **LatestBuild** folder and the **Lavalink** folder along with **lavalink.bat** and **bot.bat** or just clone the project.
 - Create a bot account by following [this page.](https://dsharpplus.github.io/articles/basics/bot_account.html)
 - Inside of **LatestBuild/netcoreapp3.1**, complete **settings.xml** with the settings you want.
   - Most importantly, include your bot token from the previous step!
