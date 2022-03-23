@@ -1,7 +1,7 @@
 # BrusselBot
 A Discord music bot for my online friendos.
 
-Latest Build Version: **3-22-2022.0**
+Latest Build Version: **3-22-2022.2**
 
 # Can I use this bot for my own purposes?
 Sure! Feel free to follow the steps below and use it however you wish. You can feel free to modify the bot however you see fit.
