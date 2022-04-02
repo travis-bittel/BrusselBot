@@ -18,7 +18,7 @@ namespace BrusselMusicBot.Commands
         [Command("play")]
         public async Task Play(CommandContext ctx, [RemainingText] string search)
         {
-            Console.WriteLine($"[Music]: Play Command by {ctx.Member.DisplayName} with search {search}");
+            Console.WriteLine($"[Music]: Play Command by {ctx.Member.DisplayName} in guild {ctx.Member.Guild} in channel {ctx.Message.Channel.Name} with search {search}");
             if (ctx.Member.VoiceState == null || ctx.Member.VoiceState.Channel == null)
             {
                 await ctx.RespondAsync("You are not in a voice channel.");

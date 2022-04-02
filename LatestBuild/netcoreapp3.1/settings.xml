@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <settings>
 	<!--<Date of Build>.<Build Number>-->
-	<version>3-22-2022.2</version>
+	<version>4-2-2022.0</version>
 	
 	<!--Place your bot token here-->
 	<token></token>
@@ -11,8 +11,8 @@
 	
 	<lavalink>
 		<!--These must match your Lavalink settings!-->
-		<hostname>127.0.0.1</hostname>
-		<port>2333</port>
+		<hostname></hostname>
+		<port></port>
 		<password></password>
 	</lavalink>
 </settings>
