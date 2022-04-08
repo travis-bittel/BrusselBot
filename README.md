@@ -27,11 +27,14 @@ Sure! Feel free to follow the steps below and use it however you wish. You can f
 - **seek \<timestamp in seconds (eg. 75)\>**: Skips to the specified playback position in the track.
 - **np ("Now Playing")**: Displays the current track and playback position.
 - **queue**: Displays the current queue of tracks.
+- **search**: Get the first 5 results and list them, then wait for the user to pick one.
+- **volume**: Set the volume. Values range from 0-100.
 
 # Console Commands
 - **help**: Lists all commands.
 - **settings**: Displays all of the settings the bot is currently using.
 - **version**: Displays the current bot version.
+- **getConns**: Lists all active channel connections.
 
 
 
