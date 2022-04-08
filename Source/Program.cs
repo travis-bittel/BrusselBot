@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 using DSharpPlus.Net;
 using DSharpPlus.Lavalink;
 using System.Xml;
+using DSharpPlus.Interactivity.Extensions;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Enums;
+using BrusselMusicBot.Source;
 
 namespace BrusselMusicBot
 {
@@ -50,6 +54,12 @@ namespace BrusselMusicBot
             };
             var lavalink = discord.UseLavalink();
 
+            discord.UseInteractivity(new InteractivityConfiguration()
+            {
+                PollBehaviour = PollBehaviour.KeepEmojis,
+                Timeout = TimeSpan.FromSeconds(30)
+            });
+
             Console.WriteLine($"Running BrusselBot Version {settings.version}");
             await discord.ConnectAsync();
             Console.WriteLine($"Logged In");
@@ -77,6 +87,7 @@ namespace BrusselMusicBot
                         "----- Commands -----" +
                         "\nsettings: Displays the currently used bot settings, loaded at startup" +
                         "\nversion: Displays the currently running bot version" + 
+                        "\ngetConns: Displays all current bot connections (aka servers the bot is currently connected in)" +
                         "\n--------------------");
                     break;
                 case "settings":
@@ -87,6 +98,11 @@ namespace BrusselMusicBot
                     break;
                 case "version":
                     Console.WriteLine($"Current Version: {settings.version}");
+                    break;
+                case "getConns":
+                    LavalinkGuildConnection[] conns = Music.GetMusicInstancesAsArray();
+                    Console.WriteLine($"Current Connections ({conns.Length}):");
+                    Array.ForEach(conns, (instance) => { Console.WriteLine($"- {instance.Guild}"); });
                     break;
                 default:
                     Console.WriteLine("Command unknown. Type \"help\" for a list of commands.");

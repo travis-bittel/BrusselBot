@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <settings>
 	<!--<Date of Build>.<Build Number>-->
-	<version>4-2-2022.0</version>
+	<version>4-8-2022.0</version>
 	
 	<!--Place your bot token here-->
 	<token></token>

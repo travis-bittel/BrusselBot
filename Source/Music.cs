@@ -67,6 +67,13 @@ namespace BrusselMusicBot.Source
         {
             return musicInstances.GetValueOrDefault(conn);
         }
+
+        public static LavalinkGuildConnection[] GetMusicInstancesAsArray()
+        {
+            LavalinkGuildConnection[] conns = new LavalinkGuildConnection[musicInstances.Keys.Count];
+            musicInstances.Keys.CopyTo(conns, 0);
+            return conns;
+        }
     }
 
     /// <summary>
@@ -95,7 +102,7 @@ namespace BrusselMusicBot.Source
             conn.DiscordWebSocketClosed += (conn, args) =>
             {
                 Music.RemoveMusicInstance(conn);
-                return Task.CompletedTask; // What is this lmao?? Someone please help me
+                return Task.CompletedTask;
             };
         }
 

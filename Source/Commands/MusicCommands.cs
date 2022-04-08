@@ -8,13 +8,20 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
+using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Lavalink.EventArgs;
+using Humanizer;
 
 namespace BrusselMusicBot.Commands
 {
     class MusicCommands : BaseCommandModule
     {
+        /// <summary>
+        /// Maximum number of search results to list when performing the search command.
+        /// </summary>
+        public const int SEARCH_NUM_TRACKS_TO_LIST = 5;
+
         [Command("play")]
         public async Task Play(CommandContext ctx, [RemainingText] string search)
         {
@@ -42,6 +49,7 @@ namespace BrusselMusicBot.Commands
                 return;
             }
 
+            // Not sure why we need to do this to be honest
             var loadResult = await conn.Node.Rest.GetTracksAsync(search);
 
             if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed
@@ -145,6 +153,7 @@ namespace BrusselMusicBot.Commands
 
             await conn.DisconnectAsync();
             await ctx.RespondAsync($"Disconnecting From **{channel.Name}**!");
+            Music.RemoveMusicInstance(conn);
         }
 
         [Command("queue")]
@@ -215,6 +224,94 @@ namespace BrusselMusicBot.Commands
 
                 await ctx.RespondAsync(embed);
             }
+        }
+
+        [Command("search")]
+        public async Task Search(CommandContext ctx, [RemainingText] string search)
+        {
+            Console.WriteLine($"[Music]: Search Command by {ctx.Member.DisplayName} in guild {ctx.Member.Guild} in channel {ctx.Message.Channel.Name} with search {search}");
+            if (ctx.Member.VoiceState == null || ctx.Member.VoiceState.Channel == null)
+            {
+                await ctx.RespondAsync("You are not in a voice channel.");
+                return;
+            }
+
+            var conn = GetConn(ctx);
+
+            // Join the user's channel if we aren't already in it
+            if (conn == null || ctx.Member.VoiceState.Channel != conn.Channel)
+            {
+                await Join(ctx);
+
+                // Get the new conn after we join
+                conn = GetConn(ctx);
+            }
+
+            if (conn == null)
+            {
+                await ctx.RespondAsync("Lavalink is not connected.");
+                return;
+            }
+
+            var loadResult = await conn.Node.Rest.GetTracksAsync(search);
+
+            if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed
+                || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
+            {
+                await ctx.RespondAsync($"Track search failed for **{search}**!");
+                return;
+            }
+
+            LavalinkTrack[] tracks = loadResult.Tracks.ToArray();
+
+            string trackList = "";
+            for (int i = 0; i < SEARCH_NUM_TRACKS_TO_LIST; i++)
+            {
+                // 1 + i so the list starts counting from 1
+                trackList += $"**{1 + i}.** {tracks[i].Title}  ({tracks[i].Length:m\\:ss})\n\n";
+            }
+
+            var embed = new DiscordEmbedBuilder
+            {
+                Color = new DiscordColor("#FF0000"),
+                Title = "Search Results",
+                Description = trackList,
+                Timestamp = DateTime.UtcNow
+            };
+            var message = await ctx.RespondAsync(embed);
+
+            // This places all of our reactions and sets up the dictionary of emojis to reference later
+            // Looks hacky, but getting the name from the reaction returns weird strings, so this
+            // seems like our best bet here.
+            Dictionary<DiscordEmoji, int> reactionToInt = new Dictionary<DiscordEmoji, int>();
+            for (int i = 1; i <= SEARCH_NUM_TRACKS_TO_LIST; i++)
+            {
+                DiscordEmoji emoji = DiscordEmoji.FromName(ctx.Client, $":{i.ToWords()}:");
+                await message.CreateReactionAsync(emoji);
+                reactionToInt[DiscordEmoji.FromName(ctx.Client, $":{i.ToWords()}:")] = i;
+            }
+
+            // Get the first reaction by the issuing user
+            var result = await message.WaitForReactionAsync(ctx.Member);
+            if (result.Result.Emoji != null)
+            {
+                DiscordEmoji reaction = result.Result.Emoji;
+
+                // We delete the embed once the user reacts
+                await message.DeleteAsync();
+
+                await ctx.RespondAsync($"Selected: **{tracks[reactionToInt[reaction] - 1].Title}**");
+
+                // -1 because our emojis start from 1
+                await Music.EnqueueTrack(conn, tracks[reactionToInt[reaction] - 1]);
+            }
+        }
+
+        [Command("volume")]
+        public async Task SetVolume(CommandContext ctx, int value)
+        {
+            await GetConn(ctx).SetVolumeAsync(value);
+            await ctx.RespondAsync($"Volume set to **{value} / 100**");
         }
 
         private LavalinkGuildConnection GetConn(CommandContext ctx)
