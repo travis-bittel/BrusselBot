@@ -10,12 +10,15 @@ using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Interactivity;
 using DSharpPlus.Interactivity.Enums;
 using BrusselMusicBot.Source;
+using System.Threading;
 
 namespace BrusselMusicBot
 {
     class Program
     {
         private static BotSettings settings;
+
+        private static CommandsNextExtension commands;
 
         static void Main()
         {
@@ -33,7 +36,7 @@ namespace BrusselMusicBot
                 Intents = DiscordIntents.AllUnprivileged
             });
 
-            var commands = discord.UseCommandsNext(new CommandsNextConfiguration()
+            commands = discord.UseCommandsNext(new CommandsNextConfiguration()
             {
                 StringPrefixes = new[] { settings.prefix }
             });
@@ -66,47 +69,87 @@ namespace BrusselMusicBot
             await lavalink.ConnectAsync(lavalinkConfig);
             Console.WriteLine($"Lavalink Connection Established");
 
-            // Handle console commands
+            // Handle console commands in separate thread
+            ThreadStart childref = new ThreadStart(GetInput);
+            Thread consoleCommandsThread = new Thread(childref);
+            consoleCommandsThread.Start();
+        }
+
+        /// <summary>
+        /// We call this infinite loop in a separate thread to handle console commands.
+        /// </summary>
+        /// <returns></returns>
+        private static void GetInput()
+        {
             while (true)
             {
-                await GetInputAsync();
+                // Break our input into words
+                string[] input = Console.ReadLine().Split(' ');
+                switch (input[0])
+                {
+                    case "help":
+                        Console.WriteLine(
+                            "----- Commands -----" +
+                            "\nsettings: Displays the currently used bot settings, loaded at startup" +
+                            "\nversion: Displays the currently running bot version" +
+                            "\ngetConns: Displays all current bot connections (aka servers the bot is currently connected in)" +
+                            "\n--------------------");
+                        break;
+                    case "settings":
+                        Console.WriteLine(
+                            $"----- Settings -----" +
+                            $"\n{settings}" +
+                            "\n--------------------");
+                        break;
+                    case "version":
+                        Console.WriteLine($"Current Version: {settings.version}");
+                        break;
+                    case "getConns":
+                        LavalinkGuildConnection[] conns = Music.GetMusicInstancesAsArray();
+                        Console.WriteLine($"Current Connections ({conns.Length}):");
+                        Array.ForEach(conns, (instance) => { Console.WriteLine($"- {instance.Guild}"); });
+                        break;
+                    case "execute":
+                        _ = CommandExecute(input);
+                        break;
+
+                    default:
+                        Console.WriteLine("Command unknown. Type \"help\" for a list of commands.");
+                        break;
+                }
             }
         }
 
         /// <summary>
-        /// We call this repeatedly to handle console commands.
+        /// Used for the execute command since it's fairly complex and looks better as a separate method.
+        /// Currently, this only supports the play command.
         /// </summary>
+        /// <param name="input"></param>
         /// <returns></returns>
-        private static async Task GetInputAsync()
+        private static async Task CommandExecute(string[] input)
         {
-            string input = Task.Run(() => Console.ReadLine()).Result;
-            switch (input)
+            try
             {
-                case "help":
-                    Console.WriteLine(
-                        "----- Commands -----" +
-                        "\nsettings: Displays the currently used bot settings, loaded at startup" +
-                        "\nversion: Displays the currently running bot version" + 
-                        "\ngetConns: Displays all current bot connections (aka servers the bot is currently connected in)" +
-                        "\n--------------------");
-                    break;
-                case "settings":
-                    Console.WriteLine(
-                        $"----- Settings -----" + 
-                        $"\n{settings}" +
-                        "\n--------------------");
-                    break;
-                case "version":
-                    Console.WriteLine($"Current Version: {settings.version}");
-                    break;
-                case "getConns":
-                    LavalinkGuildConnection[] conns = Music.GetMusicInstancesAsArray();
-                    Console.WriteLine($"Current Connections ({conns.Length}):");
-                    Array.ForEach(conns, (instance) => { Console.WriteLine($"- {instance.Guild}"); });
-                    break;
-                default:
-                    Console.WriteLine("Command unknown. Type \"help\" for a list of commands.");
-                    break;
+                // Command formatted as: "execute <connIndex> <command> [command args]
+                int connIndex = int.Parse(input[1]);
+                LavalinkGuildConnection[] conns = Music.GetMusicInstancesAsArray();
+                if (connIndex > conns.Length)
+                {
+                    throw new Exception();
+                }
+                switch (input[2])
+                {
+                    case "play":
+                        await MusicCommands.ConsolePlay(conns[connIndex], input[3]);
+                        break;
+                    default:
+                        Console.WriteLine("Invalid Command Entered!");
+                        break;
+                }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Invalid Conn Index Entered. Use getConns to get the list of conn indexes.");
             }
         }
     }

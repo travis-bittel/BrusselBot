@@ -71,6 +71,20 @@ namespace BrusselMusicBot.Commands
             await Music.EnqueueTrack(conn, track);
         }
 
+        /// <summary>
+        /// A variant of the Play command to be used from the console.
+        /// </summary>
+        /// <param name="search"></param>
+        /// <returns></returns>
+        public static async Task ConsolePlay(LavalinkGuildConnection conn, string search)
+        {
+            if (conn != null && conn.Channel != null)
+            {
+                LavalinkTrack track = GetTrackAsync(conn, search).Result;
+                await Music.EnqueueTrack(conn, track);
+            }
+        }
+
         [Command("pause")]
         public async Task Pause(CommandContext ctx)
         {
@@ -314,14 +328,14 @@ namespace BrusselMusicBot.Commands
             await ctx.RespondAsync($"Volume set to **{value} / 100**");
         }
 
-        private LavalinkGuildConnection GetConn(CommandContext ctx)
+        private static LavalinkGuildConnection GetConn(CommandContext ctx)
         {
             var lava = ctx.Client.GetLavalink();
             var node = lava.ConnectedNodes.Values.First();
             return node.GetGuildConnection(ctx.Member.VoiceState.Guild);
         }
 
-        private async Task<LavalinkTrack> GetTrackAsync(CommandContext ctx, string search)
+        private static async Task<LavalinkTrack> GetTrackAsync(CommandContext ctx, string search)
         {
             if (GetConn(ctx) == null)
             {
@@ -335,6 +349,29 @@ namespace BrusselMusicBot.Commands
                 || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
             {
                 await ctx.RespondAsync($"Track search failed for {search}.");
+                return null;
+            }
+            return loadResult.Tracks.First();
+        }
+
+        /// <summary>
+        /// Takes in a conn rather than a context. This means this method cannot create Discord messages.
+        /// </summary>
+        /// <param name="conn"></param>
+        /// <param name="search"></param>
+        /// <returns></returns>
+        private static async Task<LavalinkTrack> GetTrackAsync(LavalinkGuildConnection conn, string search)
+        {
+            if (conn == null)
+            {
+                return null;
+            }
+
+            var loadResult = await conn.Node.Rest.GetTracksAsync(search);
+
+            if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed
+                || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
+            {
                 return null;
             }
             return loadResult.Tracks.First();
