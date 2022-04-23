@@ -35,7 +35,7 @@ Sure! Feel free to follow the steps below and use it however you wish. You can f
 - **settings**: Displays all of the settings the bot is currently using.
 - **version**: Displays the current bot version.
 - **getConns**: Lists all active channel connections.
-- **execute \<connIndex\> \<command\> [command args]**: Execute a bot command on a particular bot connection from the console. Currently, this only supports the *play* command.
+- **execute \<connIndex\> \<command\> [command args]**: Execute a bot command on a particular bot connection from the console. Currently, this only supports the *play* command. You can get the *connIndex* by using the *getConns* command and observing the order in which they are printed.
 
 
 
