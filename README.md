@@ -1,7 +1,7 @@
 # BrusselBot
 A Discord music bot for my online friendos.
 
-Latest Build Version: **4-8-2022.0**
+Latest Build Version: **4-23-2022.0**
 
 # Can I use this bot for my own purposes?
 Sure! Feel free to follow the steps below and use it however you wish. You can feel free to modify the bot however you see fit.
@@ -35,6 +35,7 @@ Sure! Feel free to follow the steps below and use it however you wish. You can f
 - **settings**: Displays all of the settings the bot is currently using.
 - **version**: Displays the current bot version.
 - **getConns**: Lists all active channel connections.
+- **execute \<connIndex\> \<command\> [command args]**: Execute a bot command on a particular bot connection from the console. Currently, this only supports the *play* command.
 
 
 
